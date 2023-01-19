@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import scipy.optimize as opt
-import itertools as iter
 import errors as err
 
 
@@ -71,13 +70,6 @@ new_data_canada = processing_values(df_final)
 data_canada = preprocessing(new_data_canada)
 find_cluster_plot(data_canada, 'Canada')
 
-
-electric_df = electric_df.loc[(electric_df['Country Name'] == 'Indonesia')]
-data_electric = processing_values(electric_df)
-plt.figure()
-plt.scatter(data_electric['years'],data_electric['values'])
-plt.show()
-
 def exponential(t, n0, g):
     """Calculates exponential function with scale factor n0 and growth rate g."""
     
@@ -87,6 +79,10 @@ def exponential(t, n0, g):
     return f
 
 
+electric_df = electric_df.loc[(electric_df['Country Name'] == 'Indonesia')]
+data_electric = processing_values(electric_df)
+plt.figure()
+#plt.scatter(data_electric['years'],data_electric['values'])
 print(type(data_electric["years"]))
 print(data_electric)
 data_electric["years"] = pd.to_numeric(data_electric["years"])
@@ -95,9 +91,27 @@ param, covar = opt.curve_fit(exponential, data_electric["years"], data_electric[
                              p0=(262.016541603514, 0.02))
 
 data_electric["fit"] = exponential(data_electric["years"], *param)
-
 data_electric.plot("years", ["values", "fit"])
 plt.show()
+
+
+sigma = np.sqrt(np.diag(covar))
+year = np.arange(1995, 2031)
+print(year)
+forecast = exponential(year, *param)
+low, up = err.err_ranges(year, exponential, param, sigma)
+
+plt.figure()
+plt.plot(data_electric["years"], data_electric["values"], label="Electric Power Consumption")
+plt.plot(year, forecast, label="forecast")
+plt.fill_between(year, low, up, color="yellow", alpha=0.7)
+plt.xlabel("year")
+plt.ylabel("GDP")
+plt.legend()
+plt.show()
+
+
+
 
 
 
